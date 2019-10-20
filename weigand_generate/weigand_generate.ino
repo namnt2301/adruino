@@ -29,14 +29,18 @@
 #define DOOR_1_W_D1 29
 
 
-uint8_t d0;
-uint8_t d1;
-
+uint8_t d0 = DOOR_1_W_D0;
+uint8_t d1 = DOOR_1_W_D1;
+uint8_t count ;
 String buffer = "";
 String card_number_in_string="";
 uint8_t   door_id;
-uint32_t card_number;
+uint8_t card_number[4];
 char  card_number_in_array[9];
+char  card_number_in_array_1[3]="ff";
+char  card_number_in_array_2[3]="ff";
+char  card_number_in_array_3[3]="ff";
+char  card_number_in_array_4[3]="ff";
 void outwiegbit(unsigned int b)
 {
   int sel = b == 0 ? d0 : d1;
@@ -45,7 +49,17 @@ void outwiegbit(unsigned int b)
   digitalWrite(sel, 1); 
   delayMicroseconds(1200);
 }
-void outwieg32(uint32_t u32 , unsigned int door_id)
+void outwieg(uint8_t u8)
+{
+
+  for (int n = 0; n < 8; ++n)
+  {
+    outwiegbit((u8 >> (7 - n)) & 1);
+  }
+
+}
+
+void door_switch(uint32_t door_id)
 {
   switch(door_id)
   {
@@ -55,13 +69,8 @@ void outwieg32(uint32_t u32 , unsigned int door_id)
          break; 
     default : break;
   }
-
-  for (int n = 0; n < 32; ++n)
-  {
-    outwiegbit((u32 >> (31 - n)) & 1);
-  }
-
 }
+
 void setup() {
     //Initialize serial and wait for port to open:
   Serial.begin(9600);
@@ -79,6 +88,7 @@ void setup() {
 
 //the loop function runs over and over again forever
 void loop() { 
+  
     if (Serial.available() > 0) {
     // read the incoming byte:
    
@@ -88,20 +98,47 @@ void loop() {
     door_id     = (buffer.substring(8)).toInt();
 
     card_number_in_string.toCharArray(card_number_in_array,9);
-    card_number  = strtoul(card_number_in_array,NULL,16);
-
-    outwieg32(card_number , door_id);  
     
-    /*
-    // say what you got:
+    card_number_in_array_1[0] = card_number_in_array[0];
+    card_number_in_array_1[1] = card_number_in_array[1];
+
+    card_number_in_array_2[0] = card_number_in_array[2];
+    card_number_in_array_2[1] = card_number_in_array[3];
+    
+    card_number_in_array_3[0] = card_number_in_array[4];
+    card_number_in_array_3[1] = card_number_in_array[5];
+    
+    card_number_in_array_4[0] = card_number_in_array[6];
+    card_number_in_array_4[1] = card_number_in_array[7];
+
+    
+    card_number[0]  = strtol(card_number_in_array_1,NULL,16);
+    card_number[1]  = strtol(card_number_in_array_2,NULL,16);
+    card_number[2]  = strtol(card_number_in_array_3,NULL,16);
+    card_number[3]  = strtol(card_number_in_array_4,NULL,16);
+
+
+    door_switch(door_id);
+    
+    for(count=0 ; count< 4; count++){
+       outwieg(card_number[3 - count]);
+    }
+ 
+    
+
+   
+    
+/*
     Serial.print("I received: \n");
-    Serial.print(card_number_in_array);    
+    Serial.print(card_number[0]);    
     Serial.print(" \n");
-    Serial.print(card_number);  
+    Serial.print( card_number[1]);  
     Serial.print(" \n"); 
-    Serial.print(door_id);
+    Serial.print( card_number[2]);
+    Serial.print("\n"); 
+    Serial.print( card_number[3]);
     Serial.print("\n==="); 
-    */
-      
+    
+*/      
   }
 }
