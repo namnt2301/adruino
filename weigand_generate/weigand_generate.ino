@@ -25,24 +25,36 @@
 */
 
 // the setup function runs once when you press reset or power the board
-#define W_D0 28
-#define W_D1 29
+#define DOOR_1_W_D0 28
+#define DOOR_1_W_D1 29
 
-const byte interruptPin = 2;
-int size = 0; // for incoming serial data
-int count = 0 ;
-uint8_t buffer[6];
 
+uint8_t d0;
+uint8_t d1;
+
+String buffer = "";
+String card_number_in_string="";
+uint8_t   door_id;
+uint32_t card_number;
+char  card_number_in_array[9];
 void outwiegbit(unsigned int b)
 {
-  int sel = b == 0 ? W_D0 : W_D1;
+  int sel = b == 0 ? d0 : d1;
   digitalWrite(sel, 0);
-  delayMicroseconds(70);
+  delayMicroseconds(65);
   digitalWrite(sel, 1); 
-  delayMicroseconds(1230);
+  delayMicroseconds(1200);
 }
-void outwieg36(uint32_t u32)
+void outwieg32(uint32_t u32 , unsigned int door_id)
 {
+  switch(door_id)
+  {
+    case 1 : 
+         d0 = DOOR_1_W_D0;
+         d1 = DOOR_1_W_D1;
+         break; 
+    default : break;
+  }
 
   for (int n = 0; n < 32; ++n)
   {
@@ -58,38 +70,38 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB
   }
   // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(W_D0, OUTPUT);
-  pinMode(W_D1, OUTPUT);
-    digitalWrite(W_D0, 1);
-        digitalWrite(W_D1, 1);
-      pinMode(interruptPin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(interruptPin), interrupt_fuction, FALLING );
+  //pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(DOOR_1_W_D0, OUTPUT);
+  pinMode(DOOR_1_W_D1, OUTPUT);
+  digitalWrite(DOOR_1_W_D0, 1);
+  digitalWrite(DOOR_1_W_D1, 1);
 }
-// the loop function runs over and over again forever
-void interrupt_fuction() {
-  if(count==0)
-  {
-    outwieg36(0xb5aa709c);   // wait for a second
-    count++;
-  }
-}
-// the loop function runs over and over again forever
+
+//the loop function runs over and over again forever
 void loop() { 
     if (Serial.available() > 0) {
     // read the incoming byte:
    
-    size = Serial.readBytes(buffer, 6);
+    buffer = Serial.readString();
 
+    card_number_in_string = buffer.substring(0,8);
+    door_id     = (buffer.substring(8)).toInt();
+
+    card_number_in_string.toCharArray(card_number_in_array,9);
+    card_number  = strtoul(card_number_in_array,NULL,16);
+
+    outwieg32(card_number , door_id);  
+    
+    /*
     // say what you got:
-    Serial.print("I received: ");
-    for (int i = 0 ; i < size ; i++) {
-      Serial.println(char(buffer[i]));
-    }
-    if(size==6)
-    {
-      outwieg36(0xb5aa709c); 
-    }
-   
+    Serial.print("I received: \n");
+    Serial.print(card_number_in_array);    
+    Serial.print(" \n");
+    Serial.print(card_number);  
+    Serial.print(" \n"); 
+    Serial.print(door_id);
+    Serial.print("\n==="); 
+    */
+      
   }
 }
