@@ -34,16 +34,21 @@
 uint8_t d0 = DOOR_1_W_D0;
 uint8_t d1 = DOOR_1_W_D1;
 uint8_t count ;
+uint8_t p_even = 0 ;
+uint8_t p_odd = 1 ;
+
 String buffer = "";
 String card_number_in_string = "";
 uint8_t   door_id;
+
+uint8_t tmp;
 uint8_t card_number[4];
 char  card_number_in_array[9];
 char  card_number_in_array_1[3] = "ff";
 char  card_number_in_array_2[3] = "ff";
 char  card_number_in_array_3[3] = "ff";
 char  card_number_in_array_4[3] = "ff";
-void outwiegbit(unsigned int b)
+void outwiegbit(uint8_t b)
 {
   int sel = b == 0 ? d0 : d1;
   digitalWrite(sel, 0);
@@ -129,11 +134,46 @@ void loop() {
 
 
     door_switch(door_id);
+    //caluclate the even bit
+    
+    tmp=card_number[1];
+    for(count = 0 ; count < 8; count++)
+    {
+        p_even ^= (tmp & 1);
+         tmp >>= 1; 
+    }
 
+    tmp=card_number[0];
+    for(count = 0 ; count < 8; count++)
+    {
+        p_even ^= (tmp & 1);
+        tmp >>= 1; 
+    }
+
+    tmp=card_number[3];
+    for(count = 0 ; count < 8; count++)
+    {
+        p_odd ^= (tmp & 1);
+        tmp >>= 1; 
+    }
+
+    tmp=card_number[2];
+    for(count = 0 ; count < 8; count++)
+    {
+        p_odd ^= (tmp & 1);
+        tmp >>= 1; 
+    }
+    
+
+    // generate the wiegand 34 bit 
+    outwiegbit(p_even);
     for (count = 0 ; count < 4; count++) {
       outwieg(card_number[count]);
     }
+    outwiegbit(p_odd);
 
+   p_even = 0 ;
+   p_odd = 1 ;
 
    Serial.print("DONE");
    Serial.print("\r\n");
